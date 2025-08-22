@@ -144,6 +144,7 @@ void applyAxisToPair(uint8_t pwmCh, int val){
   const float DUTY_MID = 0.50f;
   const float DUTY_MAX = 0.75f;
 
+
   // Offset duty so neutralOffset shifts the entire PWM range.
   float offsetDuty = -((float)neutralOffset - 512.0f) / 512.0f * (DUTY_MID - DUTY_MIN);
 
@@ -156,6 +157,7 @@ void applyAxisToPair(uint8_t pwmCh, int val){
   } else if (val > joyNeutralMax){
     duty = mapf((float)val, (float)joyNeutralMax, (float)mapMax, DUTY_MID, DUTY_MAX) + offsetDuty;
     active = true;
+
   }
 
   if(duty < 0) duty = 0; else if(duty > 1) duty = 1;
