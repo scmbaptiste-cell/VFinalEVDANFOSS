@@ -111,6 +111,7 @@ void processR1L1Override(){
       } else if (millis()-rlHoldStartMs[i]>=10000){
         if (okToOverride){
           softRadioOverride=true; safetyReady=false; neutralizeAllOutputs();
+          onModeChanged(false); // basculer totalement en mode manette
           modeChangeBlockUntil=millis()+MODE_CHANGE_BLOCK_MS;
           triggerControllerPulses(i, 3, DEFAULT_PULSE_MS, 0,255,0);
           Serial.println("[PAD] Passage logiciel en mode manette (GPIO33=0). PS 5s pour armer.");

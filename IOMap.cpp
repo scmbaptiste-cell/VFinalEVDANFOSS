@@ -144,7 +144,6 @@ void applyAxisToPair(uint8_t pwmCh, int val){
   const float DUTY_MID = 0.50f;
   const float DUTY_MAX = 0.75f;
 
-
   // Offset duty so neutralOffset shifts the entire PWM range.
   float offsetDuty = -((float)neutralOffset - 512.0f) / 512.0f * (DUTY_MID - DUTY_MIN);
 
@@ -157,7 +156,6 @@ void applyAxisToPair(uint8_t pwmCh, int val){
   } else if (val > joyNeutralMax){
     duty = mapf((float)val, (float)joyNeutralMax, (float)mapMax, DUTY_MID, DUTY_MAX) + offsetDuty;
     active = true;
-
   }
 
   if(duty < 0) duty = 0; else if(duty > 1) duty = 1;
@@ -214,6 +212,10 @@ void processADS(){
   }
 
   ADSRaw rr=readADSRaw(); Axes8 a=mapADSAll(rr);
+  // Inversion de l'axe Z en mode filaire
+  int invZ = neutralOffset * 2 - a.Z;
+  if(invZ < mapMin) invZ = mapMin; else if(invZ > mapMax) invZ = mapMax;
+  a.Z = invZ;
   applyAxisToPair(0,a.X); applyAxisToPair(1,a.Y); applyAxisToPair(2,a.Z); applyAxisToPair(3,a.LX);
   applyAxisToPair(4,a.LY); applyAxisToPair(5,a.LZ); applyAxisToPair(6,a.R1); applyAxisToPair(7,a.R2);
 }
