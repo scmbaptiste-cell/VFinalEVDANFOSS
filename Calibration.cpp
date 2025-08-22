@@ -152,30 +152,35 @@ void calibWifiStart(){
       "</style></head><body>"
       "<h2>Calibration (mode filaire)</h2>" + navBar() +
       "<p class='muted'>Suivi d\u00E9taill\u00E9 dans le Moniteur s\u00E9rie (MAP). Min/Max s’affichent quand enregistr\u00E9s.</p>"
-      "<table><thead><tr><th>Axe</th><th>Min MAP</th><th>Max MAP</th><th>Enregistr\u00E9</th></tr></thead>"
+      "<table><thead><tr><th>Axe</th><th>Actuel MAP</th><th>Min MAP</th><th>Max MAP</th><th>Enregistr\u00E9</th></tr></thead>"
       "<tbody id='rows'></tbody></table>"
       "<script>"
       "const AX=['X','Y','Z','LX','LY','LZ','R1','R2'];"
       "const OFFSET=" + String(neutralOffset) + ";"
       "(function(){let sel=document.createElement('select');sel.id='off';for(let v=0;v<=1023;v++){let o=document.createElement('option');o.value=v;o.text=v;if(v===OFFSET)o.selected=true;sel.appendChild(o);}let btn=document.createElement('button');btn.id='saveOff';btn.textContent='Sauvegarde EEPROM';let div=document.createElement('div');div.style.margin='10px 0';div.appendChild(document.createTextNode('D\u00E9calage neutre : '));div.appendChild(sel);div.appendChild(document.createTextNode(' '));div.appendChild(btn);let tbl=document.querySelector('table');document.body.insertBefore(div,tbl);sel.addEventListener('change',()=>fetch('/offset?val='+sel.value,{cache:'no-store'}));btn.addEventListener('click',()=>fetch('/offset?val='+sel.value+'&save=1',{cache:'no-store'}).then(()=>alert('Offset sauvegard\u00E9')));})();"
       "function r(j){let t='';for(let i=0;i<8;i++){const s=!!j.saved[i];"
-      "t+=`<tr><td>${AX[i]}</td><td>${Number(j.min_map[i])}</td><td>${Number(j.max_map[i])}</td><td class='${s?'ok':'bad'}'>${s?'\\u2713':'\\u2717'}</td></tr>`;}"
+      "t+=`<tr><td>${AX[i]}</td><td>${Number(j.cur[i])}</td><td>${Number(j.min_map[i])}</td><td>${Number(j.max_map[i])}</td><td class='${s?'ok':'bad'}'>${s?'\\u2713':'\\u2717'}</td></tr>`;}"
       "document.getElementById('rows').innerHTML=t;}"
       "async function p(){try{let x=await fetch('/axes.json',{cache:'no-store'});r(await x.json())}catch(e){}setTimeout(p,800);}p();"
       "</script></body></html>";
     server.send(200,"text/html",html);
   });
 
-  server.on("/axes.json", HTTP_GET, [&](){
-    String json="{\"min_map\":[";
-    for(int i=0;i<8;i++){ json += String(mapRawPreCal(cal[i].minV)); if(i<7) json+=','; }
-    json += "],\"max_map\":[";
-    for(int i=0;i<8;i++){ json += String(mapRawPreCal(cal[i].maxV)); if(i<7) json+=','; }
-    json += "],\"saved\":[";
-    for(int i=0;i<8;i++){ json += (haveMin[i]&&haveMax[i])? "true":"false"; if(i<7) json+=','; }
-    json += "]}";
-    server.send(200,"application/json",json);
-  });
+    server.on("/axes.json", HTTP_GET, [&](){
+      ADSRaw r = readADSRaw();
+      Axes8 m = mapADSAll(r);
+      int* val = (int*)&m;
+      String json="{\"cur\":[";
+      for(int i=0;i<8;i++){ json += String(val[i]); if(i<7) json+=','; }
+      json += "],\"min_map\":[";
+      for(int i=0;i<8;i++){ json += String(mapRawPreCal(cal[i].minV)); if(i<7) json+=','; }
+      json += "],\"max_map\":[";
+      for(int i=0;i<8;i++){ json += String(mapRawPreCal(cal[i].maxV)); if(i<7) json+=','; }
+      json += "],\"saved\":[";
+      for(int i=0;i<8;i++){ json += (haveMin[i]&&haveMax[i])? \"true\":\"false\"; if(i<7) json+=','; }
+      json += "]}";
+      server.send(200,\"application/json\",json);
+    });
 
   server.on("/offset", HTTP_GET, [&](){
     if(!server.hasArg("val")){ server.send(400,"text/plain","missing"); return; }

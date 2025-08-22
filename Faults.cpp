@@ -46,7 +46,11 @@ void setFault(FaultCode c, const char* origin){
   } else if (c == FC_ADS_DROIT)   Serial.println("N2 : ADS1115 DROIT (0x49) absent/KO.");
   else if (c == FC_ADS_GAUCHE)    Serial.println("N3 : ADS1115 GAUCHE (0x48) absent/KO.");
   else if (c == FC_PCA)           Serial.println("N4 : PCA9685 (0x40) absent/KO.");
-  else if (c == FC_NEUTRAL_TO)    Serial.println("N7 : Temps dépassé pour neutre joystick au démarrage.");
+  else if (c == FC_NEUTRAL_TO) {
+    Serial.println("N7 : Temps dépassé pour neutre joystick au démarrage.");
+    // Afficher immédiatement les valeurs axes via le portail de calibration
+    calibWifiStart();
+  }
   else if (c == FC_NO_GAMEPAD)    Serial.println("Alternance Rouge/Vert = Mode manette sans manette connectée.");
 
   if (faultCode != FC_NONE){
