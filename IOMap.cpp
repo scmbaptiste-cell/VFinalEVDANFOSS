@@ -28,9 +28,6 @@ static int lastOffset = 512;
 void updateNeutralWindow(){
   joyNeutralMin = neutralOffset - NEUTRAL_HALF_WINDOW;
   joyNeutralMax = neutralOffset + NEUTRAL_HALF_WINDOW;
-  int deltaFrom512 = neutralOffset - 512;
-  mapMin = 255 + deltaFrom512;
-  mapMax = 768 + deltaFrom512;
 
   int delta = neutralOffset - lastOffset;
   if(delta != 0){
@@ -147,19 +144,23 @@ void applyAxisToPair(uint8_t pwmCh, int val){
   const float DUTY_MID = 0.50f;
   const float DUTY_MAX = 0.75f;
 
-  float duty = DUTY_MID;
+
+  // Offset duty so neutralOffset shifts the entire PWM range.
+  float offsetDuty = -((float)neutralOffset - 512.0f) / 512.0f * (DUTY_MID - DUTY_MIN);
+
+  float duty = DUTY_MID + offsetDuty;
   bool active = false; // true when axis is outside neutral window
 
   if (val < joyNeutralMin){
-    duty = mapf((float)val, (float)mapMin, (float)joyNeutralMin, DUTY_MIN, DUTY_MID);
+    duty = mapf((float)val, (float)mapMin, (float)joyNeutralMin, DUTY_MIN, DUTY_MID) + offsetDuty;
     active = true;
   } else if (val > joyNeutralMax){
-    duty = mapf((float)val, (float)joyNeutralMax, (float)mapMax, DUTY_MID, DUTY_MAX);
+    duty = mapf((float)val, (float)joyNeutralMax, (float)mapMax, DUTY_MID, DUTY_MAX) + offsetDuty;
     active = true;
-  } else {
-    duty = DUTY_MID;
-    active = false;
+
   }
+
+  if(duty < 0) duty = 0; else if(duty > 1) duty = 1;
 
   if (pwmCh < 8){
     setPWMpercent(pwmCh, duty);
