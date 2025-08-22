@@ -170,6 +170,7 @@ void calibWifiStart(){
       ADSRaw r = readADSRaw();
       Axes8 m = mapADSAll(r);
       int* val = (int*)&m;
+
       String json = "{\"cur\":[";
       for(int i=0;i<8;i++){ json += String(val[i]); if(i<7) json+=','; }
       json += "],\"min_map\":[";
@@ -180,6 +181,7 @@ void calibWifiStart(){
       for(int i=0;i<8;i++){ json += (haveMin[i] && haveMax[i]) ? "true" : "false"; if(i<7) json+=','; }
       json += "]}";
       server.send(200, "application/json", json);
+
     });
 
   server.on("/offset", HTTP_GET, [&](){
