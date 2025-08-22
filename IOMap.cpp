@@ -28,9 +28,6 @@ static int lastOffset = 512;
 void updateNeutralWindow(){
   joyNeutralMin = neutralOffset - NEUTRAL_HALF_WINDOW;
   joyNeutralMax = neutralOffset + NEUTRAL_HALF_WINDOW;
-  int deltaFrom512 = neutralOffset - 512;
-  mapMin = 255 + deltaFrom512;
-  mapMax = 768 + deltaFrom512;
 
   int delta = neutralOffset - lastOffset;
   if(delta != 0){
@@ -107,10 +104,8 @@ Axes8 mapADSAll(const ADSRaw& r){
   a.LX= mapADSWithCal(r.LX,cal[3]); a.LY= mapADSWithCal(r.LY,cal[4]); a.LZ= mapADSWithCal(r.LZ,cal[5]);
   a.R1= mapADSWithCal(r.R1,cal[6]); a.R2= mapADSWithCal(r.R2,cal[7]);
 
-  int delta = neutralOffset - 512;
   int *v = (int*)&a;
   for(int i=0;i<8;i++){
-    v[i] += delta;
     if(v[i] < mapMin) v[i] = mapMin;
     if(v[i] > mapMax) v[i] = mapMax;
   }
@@ -149,24 +144,26 @@ void applyAxisToPair(uint8_t pwmCh, int val){
   const float DUTY_MID = 0.50f;
   const float DUTY_MAX = 0.75f;
 
-  float duty = DUTY_MID;
-  bool dirAbove = false; // false: below neutral; true: above neutral
+  // Offset duty so neutralOffset shifts the entire PWM range.
+  float offsetDuty = -((float)neutralOffset - 512.0f) / 512.0f * (DUTY_MID - DUTY_MIN);
+
+  float duty = DUTY_MID + offsetDuty;
+  bool active = false; // true when axis is outside neutral window
 
   if (val < joyNeutralMin){
-    duty = mapf((float)val, (float)mapMin, (float)joyNeutralMin, DUTY_MIN, DUTY_MID);
-    dirAbove = false;
+    duty = mapf((float)val, (float)mapMin, (float)joyNeutralMin, DUTY_MIN, DUTY_MID) + offsetDuty;
+    active = true;
   } else if (val > joyNeutralMax){
-    duty = mapf((float)val, (float)joyNeutralMax, (float)mapMax, DUTY_MID, DUTY_MAX);
-    dirAbove = true;
-  } else {
-    duty = DUTY_MID;
-    dirAbove = false;
+    duty = mapf((float)val, (float)joyNeutralMax, (float)mapMax, DUTY_MID, DUTY_MAX) + offsetDuty;
+    active = true;
   }
+
+  if(duty < 0) duty = 0; else if(duty > 1) duty = 1;
 
   if (pwmCh < 8){
     setPWMpercent(pwmCh, duty);
     uint8_t torCh = PWM_TO_TOR[pwmCh];
-    setTOR(torCh, dirAbove);
+    setTOR(torCh, active);
   }
 }
 void neutralizeAllOutputs(){ for(uint8_t i=0;i<8;++i) setPWMpercent(i,0.5f); for(uint8_t i=8;i<16;++i) setTOR(i,false); }
