@@ -150,23 +150,23 @@ void applyAxisToPair(uint8_t pwmCh, int val){
   const float DUTY_MAX = 0.75f;
 
   float duty = DUTY_MID;
-  bool dirAbove = false; // false: below neutral; true: above neutral
+  bool active = false; // true when axis is outside neutral window
 
   if (val < joyNeutralMin){
     duty = mapf((float)val, (float)mapMin, (float)joyNeutralMin, DUTY_MIN, DUTY_MID);
-    dirAbove = false;
+    active = true;
   } else if (val > joyNeutralMax){
     duty = mapf((float)val, (float)joyNeutralMax, (float)mapMax, DUTY_MID, DUTY_MAX);
-    dirAbove = true;
+    active = true;
   } else {
     duty = DUTY_MID;
-    dirAbove = false;
+    active = false;
   }
 
   if (pwmCh < 8){
     setPWMpercent(pwmCh, duty);
     uint8_t torCh = PWM_TO_TOR[pwmCh];
-    setTOR(torCh, dirAbove);
+    setTOR(torCh, active);
   }
 }
 void neutralizeAllOutputs(){ for(uint8_t i=0;i<8;++i) setPWMpercent(i,0.5f); for(uint8_t i=8;i<16;++i) setTOR(i,false); }
