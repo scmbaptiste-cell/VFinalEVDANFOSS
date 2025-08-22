@@ -170,16 +170,18 @@ void calibWifiStart(){
       ADSRaw r = readADSRaw();
       Axes8 m = mapADSAll(r);
       int* val = (int*)&m;
-      String json="{\"cur\":[";
+
+      String json = "{\"cur\":[";
       for(int i=0;i<8;i++){ json += String(val[i]); if(i<7) json+=','; }
       json += "],\"min_map\":[";
       for(int i=0;i<8;i++){ json += String(mapRawPreCal(cal[i].minV)); if(i<7) json+=','; }
       json += "],\"max_map\":[";
       for(int i=0;i<8;i++){ json += String(mapRawPreCal(cal[i].maxV)); if(i<7) json+=','; }
       json += "],\"saved\":[";
-      for(int i=0;i<8;i++){ json += (haveMin[i]&&haveMax[i])? \"true\":\"false\"; if(i<7) json+=','; }
+      for(int i=0;i<8;i++){ json += (haveMin[i] && haveMax[i]) ? "true" : "false"; if(i<7) json+=','; }
       json += "]}";
-      server.send(200,\"application/json\",json);
+      server.send(200, "application/json", json);
+
     });
 
   server.on("/offset", HTTP_GET, [&](){
