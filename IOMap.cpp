@@ -107,10 +107,8 @@ Axes8 mapADSAll(const ADSRaw& r){
   a.LX= mapADSWithCal(r.LX,cal[3]); a.LY= mapADSWithCal(r.LY,cal[4]); a.LZ= mapADSWithCal(r.LZ,cal[5]);
   a.R1= mapADSWithCal(r.R1,cal[6]); a.R2= mapADSWithCal(r.R2,cal[7]);
 
-  int delta = neutralOffset - 512;
   int *v = (int*)&a;
   for(int i=0;i<8;i++){
-    v[i] += delta;
     if(v[i] < mapMin) v[i] = mapMin;
     if(v[i] > mapMax) v[i] = mapMax;
   }
